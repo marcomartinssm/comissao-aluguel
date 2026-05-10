@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Contratos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f2;--surface:#ffffff;--border:#e4e2dc;
+  --text:#1a1916;--muted:#6b6a65;--hint:#a09e98;
+  --accent:#2a5cff;--accent-bg:#eef1ff;
+  --green:#1a7a4a;--green-bg:#e6f5ed;
+  --red:#c0392b;--red-bg:#fdecea;
+  --radius:10px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;padding:32px 16px}
+.container{max-width:780px;margin:0 auto}
+.header{text-align:center;margin-bottom:32px}
+.header-icon{width:48px;height:48px;background:var(--accent-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.header h1{font-size:22px;font-weight:600;color:var(--text);margin-bottom:4px}
+.header p{font-size:14px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.month-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.month-row label{font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
+select.month-sel{padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer;outline:none}
+select.month-sel:focus{border-color:var(--accent)}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;min-width:640px}
+thead th{text-align:left;font-size:11px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.td-sel{width:100%;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.td-sel:focus{border-color:var(--accent)}
+.td-input{width:100%;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.td-input:focus{border-color:var(--accent)}
+.td-check{display:flex;justify-content:center}
+.td-check input{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+.del-btn{background:none;border:none;color:var(--hint);font-size:20px;cursor:pointer;line-height:1;padding:0 4px;border-radius:4px;transition:all .15s}
+.del-btn:hover{color:var(--red);background:var(--red-bg)}
+.toolbar{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.btn-add{padding:8px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-add:hover{background:var(--accent);color:#fff}
+.counter{font-size:12px;color:var(--hint);margin-left:auto}
+.btn-submit{width:100%;padding:13px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:8px}
+.btn-submit:hover{opacity:.88}
+.btn-submit:disabled{opacity:.5;cursor:default}
+.success-screen{display:none;text-align:center;padding:48px 24px}
+.success-icon{width:64px;height:64px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.success-screen h2{font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px}
+.success-screen p{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.7}
+.success-detail{background:var(--bg);border-radius:8px;padding:14px 18px;font-size:13px;color:var(--muted);text-align:left;margin-bottom:24px}
+.success-detail strong{color:var(--text);display:block;margin-bottom:4px}
+.btn-novo{padding:10px 24px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-novo:hover{background:var(--bg)}
+.cfg-note{background:var(--accent-bg);border:1px solid #c8d4ff;border-radius:8px;padding:14px 16px;font-size:12px;color:#1e3a8a;margin-bottom:20px;line-height:1.7}
+.cfg-note strong{display:block;margin-bottom:4px;font-size:13px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.form-input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.empty-row td{text-align:center;padding:28px;color:var(--hint);font-size:13px}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.pill-novo{background:#E6F1FB;color:#0C447C}
+.pill-reag{background:#FAEEDA;color:#633806}
+</style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+
+  <!-- CONFIG (primeira vez) -->
+  <div id="cfg-section" style="display:none">
+    <div class="header">
+      <div class="header-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="#2a5cff"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#2a5cff" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <h1>Configuração inicial</h1>
+      <p>Informe as credenciais do Supabase para conectar o formulário</p>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">URL do projeto Supabase</label>
+        <input class="form-input" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chave anon / public (Legacy)</label>
+        <input class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsIn...">
+      </div>
+      <button class="btn-submit" onclick="saveCfg()">Salvar e abrir formulário</button>
+    </div>
+  </div>
+
+  <!-- FORMULÁRIO -->
+  <div id="form-section" style="display:none">
+    <div class="header">
+      <div class="header-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="#2a5cff"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#2a5cff" opacity=".5"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#2a5cff" opacity=".5"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#2a5cff"/></svg>
+      </div>
+      <h1>Registro de contratos</h1>
+      <p>Preencha os contratos do mês e envie para o sistema</p>
+    </div>
+
+    <div class="card">
+      <div class="month-row" style="margin-bottom:0">
+        <label>Mês de referência:</label>
+        <select class="month-sel" id="form-month"></select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Contratos do mês</div>
+      <div class="card-sub">Adicione um contrato por linha. Marque "Pré-atend." quando o pré-atendimento participou do fechamento.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:130px">Tipo</th>
+              <th style="width:100px">Cód. imóvel</th>
+              <th style="width:100px">Nº contrato</th>
+              <th style="width:110px">Valor aluguel</th>
+              <th style="width:90px">Tx. interm. %</th>
+              <th style="width:90px">Tx. adm. %</th>
+              <th style="width:80px;text-align:center">Pré-atend.</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="form-tbody"></tbody>
+        </table>
+      </div>
+      <div class="toolbar">
+        <button class="btn-add" onclick="addRow()">+ Adicionar contrato</button>
+        <span class="counter" id="row-counter">0 contratos</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:4px">Pronto para enviar?</div>
+      <div class="card-sub" style="margin-bottom:16px">Verifique se todos os campos estão preenchidos corretamente antes de enviar.</div>
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">Enviar contratos</button>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="success-section" class="card" style="display:none">
+    <div class="success-screen" style="display:block">
+      <div class="success-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M8 16l5.5 5.5L24 10" stroke="#1a7a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Contratos enviados com sucesso!</h2>
+      <p>Os dados foram registrados no sistema e já estão<br>disponíveis para consulta.</p>
+      <div class="success-detail">
+        <strong>Resumo do envio</strong>
+        <span id="success-info"></span>
+      </div>
+      <button class="btn-novo" onclick="resetForm()">Registrar novo mês</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var CFG_KEY = 'loc_form_cfg';
+  var sbClient = null;
+  var rows = [];
+  var rowId = 0;
+
+  // ── CONFIG ──────────────────────────────────────────────────
+  function init() {
+    var cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+    if (cfg.url && cfg.key) {
+      try {
+        sbClient = window.supabase.createClient(cfg.url, cfg.key);
+        showForm();
+      } catch(e) {
+        showCfg();
+      }
+    } else {
+      showCfg();
+    }
+  }
+
+  function saveCfg() {
+    var url = document.getElementById('cfg-url').value.trim();
+    var key = document.getElementById('cfg-key').value.trim();
+    if (!url || !key) { alert('Preencha a URL e a chave.'); return; }
+    try {
+      sbClient = window.supabase.createClient(url, key);
+      localStorage.setItem(CFG_KEY, JSON.stringify({url:url, key:key}));
+      showForm();
+    } catch(e) {
+      alert('Erro ao conectar. Verifique as credenciais.');
+    }
+  }
+  window.saveCfg = saveCfg;
+
+  function showCfg() {
+    document.getElementById('cfg-section').style.display = 'block';
+    document.getElementById('form-section').style.display = 'none';
+    document.getElementById('success-section').style.display = 'none';
+  }
+
+  function showForm() {
+    document.getElementById('cfg-section').style.display = 'none';
+    document.getElementById('form-section').style.display = 'block';
+    document.getElementById('success-section').style.display = 'none';
+    buildMonths();
+    if (!rows.length) { addRow(); addRow(); }
+    renderTable();
+  }
+
+  // ── MESES ───────────────────────────────────────────────────
+  function buildMonths() {
+    var now = new Date();
+    var opts = '';
+    for (var i = 5; i >= 0; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      var val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      var label = d.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+      opts += '<option value="'+val+'"'+(i===0?' selected':'')+'>'+label+'</option>';
+    }
+    document.getElementById('form-month').innerHTML = opts;
+  }
+
+  // ── TABELA ──────────────────────────────────────────────────
+  function addRow(data) {
+    var id = rowId++;
+    rows.push({
+      id: id,
+      tipo: data ? data.tipo : 'novo',
+      cod: data ? (data.cod||'') : '',
+      contrato: data ? (data.contrato||'') : '',
+      aluguel: data ? (data.aluguel||'') : '',
+      inter: data ? (data.inter||'') : '',
+      adm: data ? (data.adm||'') : '',
+      pre: data ? (data.pre||false) : false
+    });
+    renderTable();
+  }
+  window.addRow = addRow;
+
+  function renderTable() {
+    var tbody = document.getElementById('form-tbody');
+    document.getElementById('row-counter').textContent = rows.length + (rows.length===1?' contrato':' contratos');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Nenhum contrato adicionado ainda.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function(r){
+      return '<tr>'
+        +'<td><select class="td-sel" data-id="'+r.id+'" data-field="tipo">'
+        +'<option value="novo"'+(r.tipo==='novo'?' selected':'')+'>Novo</option>'
+        +'<option value="reag"'+(r.tipo==='reag'?' selected':'')+'>Reagenciamento</option>'
+        +'</select></td>'
+        +'<td><input class="td-input" data-id="'+r.id+'" data-field="cod" value="'+esc(r.cod)+'" placeholder="IM-001"></td>'
+        +'<td><input class="td-input" data-id="'+r.id+'" data-field="contrato" value="'+esc(r.contrato)+'" placeholder="CT-001"></td>'
+        +'<td><input type="number" class="td-input" data-id="'+r.id+'" data-field="aluguel" value="'+r.aluguel+'" placeholder="2000" min="0" style="font-family:\'DM Mono\',monospace"></td>'
+        +'<td><input type="number" class="td-input" data-id="'+r.id+'" data-field="inter" value="'+r.inter+'" placeholder="8" min="0" max="100" step="0.1"></td>'
+        +'<td><input type="number" class="td-input" data-id="'+r.id+'" data-field="adm" value="'+r.adm+'" placeholder="10" min="0" max="100" step="0.1"></td>'
+        +'<td><div class="td-check"><input type="checkbox" data-id="'+r.id+'" data-field="pre" '+(r.pre?'checked':'')+'></div></td>'
+        +'<td><button class="del-btn" data-id="'+r.id+'" data-action="del">×</button></td>'
+        +'</tr>';
+    }).join('');
+  }
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+  document.getElementById('form-tbody').addEventListener('input', function(e){
+    var el = e.target; var id = parseInt(el.dataset.id); var field = el.dataset.field;
+    if (isNaN(id)||!field) return;
+    var r = rows.find(function(x){ return x.id===id; });
+    if (r) r[field] = el.value;
+  });
+  document.getElementById('form-tbody').addEventListener('change', function(e){
+    var el = e.target; var id = parseInt(el.dataset.id); var field = el.dataset.field;
+    if (isNaN(id)||!field) return;
+    var r = rows.find(function(x){ return x.id===id; });
+    if (r) r[field] = field==='pre' ? el.checked : el.value;
+  });
+  document.getElementById('form-tbody').addEventListener('click', function(e){
+    var el = e.target.closest('[data-action="del"]');
+    if (!el) return;
+    var id = parseInt(el.dataset.id);
+    rows = rows.filter(function(x){ return x.id!==id; });
+    renderTable();
+  });
+
+  // ── SUBMIT ──────────────────────────────────────────────────
+  async function submitForm() {
+    var mes = document.getElementById('form-month').value;
+    var validos = rows.filter(function(r){ return r.aluguel && r.adm; });
+    if (!validos.length) {
+      alert('Preencha ao menos um contrato com valor de aluguel e taxa de administração.');
+      return;
+    }
+    var btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    var hasError = false;
+    for (var i = 0; i < validos.length; i++) {
+      var r = validos[i];
+      var payload = {
+        mes: mes,
+        tipo: r.tipo,
+        cod_imovel: r.cod,
+        num_contrato: r.contrato,
+        valor_aluguel: parseFloat(r.aluguel)||0,
+        tx_intermediacao: parseFloat(r.inter)||0,
+        tx_administracao: parseFloat(r.adm)||0,
+        pre_atendimento: r.pre||false
+      };
+      var res = await sbClient.from('comissoes_contratos').insert(payload);
+      if (res.error) { hasError = true; }
+    }
+
+    if (hasError) {
+      btn.disabled = false;
+      btn.textContent = 'Enviar contratos';
+      alert('Ocorreu um erro ao enviar. Verifique sua conexão e tente novamente.');
+      return;
+    }
+
+    var novos = validos.filter(function(r){ return r.tipo==='novo'; }).length;
+    var reags = validos.filter(function(r){ return r.tipo==='reag'; }).length;
+    var mesLabel = document.getElementById('form-month').options[document.getElementById('form-month').selectedIndex].text;
+    document.getElementById('success-info').textContent =
+      validos.length + ' contrato(s) enviado(s) para ' + mesLabel + ' — ' + novos + ' novo(s) e ' + reags + ' reagenciamento(s).';
+
+    document.getElementById('form-section').style.display = 'none';
+    document.getElementById('success-section').style.display = 'block';
+  }
+  window.submitForm = submitForm;
+
+  function resetForm() {
+    rows = []; rowId = 0;
+    document.getElementById('btn-submit').disabled = false;
+    document.getElementById('btn-submit').textContent = 'Enviar contratos';
+    showForm();
+  }
+  window.resetForm = resetForm;
+
+  init();
+})();
+</script>
+</body>
+</html>
