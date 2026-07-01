@@ -30,7 +30,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 select.month-sel{padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer;outline:none}
 select.month-sel:focus{border-color:var(--accent)}
 .table-wrap{overflow-x:auto;margin-bottom:12px}
-table{width:100%;border-collapse:collapse;min-width:640px}
+table{width:100%;border-collapse:collapse;min-width:920px}
 thead th{text-align:left;font-size:11px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.06em;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
 tbody td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
@@ -126,6 +126,8 @@ tbody tr:last-child td{border-bottom:none}
               <th style="width:90px">Tx. interm. %</th>
               <th style="width:90px">Tx. adm. %</th>
               <th style="width:80px;text-align:center">Pré-atend.</th>
+              <th style="width:140px">Mídia origem</th>
+              <th style="width:130px">Fiança</th>
               <th style="width:36px"></th>
             </tr>
           </thead>
@@ -169,6 +171,9 @@ tbody tr:last-child td{border-bottom:none}
   var sbClient = null;
   var rows = [];
   var rowId = 0;
+
+  var MIDIA_OPTS = ['Grupo Zap','Site','Meta Ads','Instagram','Indicação','Placa','Whatsapp'];
+  var FIANCA_OPTS = ['Porto Seguro','Tokio Marine','Outros','Sem garantia','Caução','Fiador','Loft'];
 
   // ── CONFIG ──────────────────────────────────────────────────
   function init() {
@@ -239,17 +244,25 @@ tbody tr:last-child td{border-bottom:none}
       aluguel: data ? (data.aluguel||'') : '',
       inter: data ? (data.inter||'') : '',
       adm: data ? (data.adm||'') : '',
-      pre: data ? (data.pre||false) : false
+      pre: data ? (data.pre||false) : false,
+      midia: data ? (data.midia||'') : '',
+      fianca: data ? (data.fianca||'') : ''
     });
     renderTable();
   }
   window.addRow = addRow;
 
+  function selOpts(opts, current) {
+    return '<option value="">Selecione</option>' + opts.map(function(o){
+      return '<option value="'+o+'"'+(current===o?' selected':'')+'>'+o+'</option>';
+    }).join('');
+  }
+
   function renderTable() {
     var tbody = document.getElementById('form-tbody');
     document.getElementById('row-counter').textContent = rows.length + (rows.length===1?' contrato':' contratos');
     if (!rows.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Nenhum contrato adicionado ainda.</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Nenhum contrato adicionado ainda.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(function(r){
@@ -264,6 +277,8 @@ tbody tr:last-child td{border-bottom:none}
         +'<td><input type="number" class="td-input" data-id="'+r.id+'" data-field="inter" value="'+r.inter+'" placeholder="8" min="0" max="100" step="0.1"></td>'
         +'<td><input type="number" class="td-input" data-id="'+r.id+'" data-field="adm" value="'+r.adm+'" placeholder="10" min="0" max="100" step="0.1"></td>'
         +'<td><div class="td-check"><input type="checkbox" data-id="'+r.id+'" data-field="pre" '+(r.pre?'checked':'')+'></div></td>'
+        +'<td><select class="td-sel" data-id="'+r.id+'" data-field="midia">'+selOpts(MIDIA_OPTS, r.midia)+'</select></td>'
+        +'<td><select class="td-sel" data-id="'+r.id+'" data-field="fianca">'+selOpts(FIANCA_OPTS, r.fianca)+'</select></td>'
         +'<td><button class="del-btn" data-id="'+r.id+'" data-action="del">×</button></td>'
         +'</tr>';
     }).join('');
@@ -314,7 +329,9 @@ tbody tr:last-child td{border-bottom:none}
         valor_aluguel: parseFloat(r.aluguel)||0,
         tx_intermediacao: parseFloat(r.inter)||0,
         tx_administracao: parseFloat(r.adm)||0,
-        pre_atendimento: r.pre||false
+        pre_atendimento: r.pre||false,
+        midia_origem: r.midia||null,
+        fianca: r.fianca||null
       };
       var res = await sbClient.from('comissoes_contratos').insert(payload);
       if (res.error) { hasError = true; }
